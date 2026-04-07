@@ -28,25 +28,50 @@ class LRModel:
     """
 
     def __init__(self):
-        pass
+        self.model = LogisticRegression(max_iter=1000)
+
 
     def train(self, train_data, train_targets):
-        pass
+        if len(np.unique(train_targets)) > 1:
+            self.model.fit(train_data, train_targets)
 
     def evaluate(self, data, targets):
-        pass
+        if len(targets) > 0.0:
+            return self.model.score(data, targets)
+        return 0.0
 
 
 class LRFromScratch:
     # todo:
-    def __init__(self):
-        pass
+    def __init__(self , learning_rate = 0.01, num_iterations = 1000):
+        self.learning_rate = learning_rate
+        self.num_iterations = num_iterations
+        self.weights = None
+        self.bias = None
 
+    def _sigmoid(self, z):
+        z = np.clip(z, -500, 500) 
+        return 1 / (1 + np.exp(-z))
+    
     def train(self, train_data, train_targets):
-        pass
+        num_samples, num_features = train_data.shape
+        self.weights = np.zeros(num_features)
+        self.bias = 0
+
+        for _ in range(self.num_iterations):
+            linear_model = np.dot(train_data, self.weights) + self.bias
+            y_predicted = self._sigmoid(linear_model)
+            # 这边使用了交叉熵损失函数的导数
+            dw = (1 / num_samples) * np.dot(train_data.T, (y_predicted - train_targets))
+            db = (1 / num_samples) * np.sum(y_predicted - train_targets)
+
+            self.weights -= self.learning_rate * dw
+            self.bias -= self.learning_rate * db
     
     def evaluate(self, data, targets):
-        pass
+        linear_model = np.dot(data, self.weights) + self.bias
+        y_predicted = self._sigmoid(linear_model)
+        return np.mean((y_predicted >= 0.5).astype(int) == targets)
 
 
 def data_preprocess():

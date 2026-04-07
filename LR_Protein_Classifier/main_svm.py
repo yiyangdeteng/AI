@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+
 
 class SVMModel:
     # todo:
@@ -25,13 +28,16 @@ class SVMModel:
         - float: Accuracy score of the model on the given data.
     """
     def __init__(self):
-        pass
+        self.model = SVC(max_iter=1000)
 
     def train(self, train_data, train_targets):
-        pass
+        if len(np.unique(train_targets)) > 1:
+            self.model.fit(train_data, train_targets)
 
     def evaluate(self, data, targets):
-        pass
+        if len(targets) > 0:
+            return self.model.score(data, targets)
+        return 0.0
 
 class SVMFromScratch:
     # todo:
@@ -53,9 +59,38 @@ def data_preprocess():
     data_list = []
     target_list = []
     for task in range(1, 56):  # Assuming only one task for now
-        task_col = cast.iloc[:, task]
-      
+        task_col = cast.iloc[:, task] # Get the column for the current task
+        train_data = []
+        test_data = []
+        train_targets = []
+        test_targets = []
         ## todo: Try to load data/target
+        for i , label in enumerate(task_col):
+            features = diagrams[i]
+            if label == 1:
+                train_data.append(features)
+                train_targets.append(1)
+            elif label == 2:
+                train_data.append(features)
+                train_targets.append(0)
+            elif label == 3:
+                test_data.append(features)
+                test_targets.append(1)
+            elif label == 4:
+                test_data.append(features)
+                test_targets.append(0)
+        train_data = np.array(train_data)
+        test_data = np.array(test_data)
+        train_targets = np.array(train_targets)
+        test_targets = np.array(test_targets)
+
+        # standardize the data
+        # 课外探索：标准化数据可以让数据处于相似的范围内，避免某些特征对模型产生过大的影响
+        # 这边采用了StandardScaler进行标准化，它会将数据转换为均值为0，标准差为1的分布。这样可以提高模型的训练效果和收敛速度。
+        if len(train_data) > 0:
+            scaler = StandardScaler()
+            train_data = scaler.fit_transform(train_data)
+            test_data = scaler.transform(test_data)
 
         data_list.append((train_data, test_data))
         target_list.append((train_targets, test_targets))
