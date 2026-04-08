@@ -40,15 +40,60 @@ class SVMModel:
         return 0.0
 
 class SVMFromScratch:
-    # todo:
-    def __init__(self):
-        pass
+   class SVMFromScratch:
+    """
+        手动实现的支持向量机模型 (基于梯度下降和 Hinge Loss)
+    """
+    def __init__(self, learning_rate=0.01, lambda_param=0.01, num_iterations=1000):
+        self.learning_rate = learning_rate
+        self.lambda_param = lambda_param  # 正则化参数，控制间隔大小
+        self.num_iterations = num_iterations
+        self.weights = None
+        self.bias = None
 
     def train(self, train_data, train_targets):
-        pass
+        num_samples, num_features = train_data.shape
+        # 1. 将原始标签转换为 -1 和 1
+        y_ = np.where(train_targets <= 0, -1, 1)
+
+        self.weights = np.zeros(num_features)
+        self.bias = 0
+
+        # 2. 梯度下降迭代
+        for _ in range(self.num_iterations):
+            # 计算每个样本当前的“分类置信度”：y_i * (w * x_i + b)
+            # 结果 >= 1 说明分类极其正确（处于安全区）
+            # 结果 < 1 说明分类错误，
+            condition = y_ * (np.dot(train_data, self.weights) + self.bias) >= 1
+            
+            # 首先初始化梯度（正则项）
+            dw = 2 * self.lambda_param * self.weights
+            db = 0
+
+            # 找出不符合要求的样本
+            incorrect_idx = ~condition
+            
+            # 如果存在处于危险区的样本，它们就会产生 Hinge Loss，需要叠加梯度
+            if np.any(incorrect_idx):
+                # 累加危险区样本对 w 的偏导数：-y_i * x_i
+                dw -= np.dot(train_data[incorrect_idx].T, y_[incorrect_idx])
+                # 累加危险区样本对 b 的偏导数：-y_i
+                db -= np.sum(y_[incorrect_idx])
+
+            dw /= num_samples
+            db /= num_samples
+            # 更新导数
+            self.weights -= self.learning_rate * dw
+            self.bias -= self.learning_rate * db
     
     def evaluate(self, data, targets):
-        pass
+        # 计算线性输出 z = w * x + b
+        linear_output = np.dot(data, self.weights) + self.bias
+        
+        # z >= 0 判定为正例 1，否则判定为负例 0
+        predictions = (linear_output >= 0).astype(int)
+        
+        return np.mean(predictions == targets)
     
 
 def data_preprocess():
